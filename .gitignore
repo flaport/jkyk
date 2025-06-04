@@ -1,72 +1,93 @@
-/target
-
-# Byte-compiled / optimized / DLL files
-__pycache__/
-.pytest_cache/
+# files
+*.c
+*.cover
+*.egg
+*.egg-info
+*.log
+*.manifest
+*.mo
+*.pot
+*.py,cover
 *.py[cod]
-
-# C extensions
+*.sage.py
 *.so
-
-# Distribution / packaging
+*.spec
+.DS_Store
 .Python
+.cache
+.coverage
+.coverage.*
+.dmypy.json
+.env
+.installed.cfg
+.mr.developer.cfg
+.project
+.pydevproject
+.python-version
+.ropeproject
+.scrapy
+.spyderproject
+.spyproject
+.venv
+.webassets-cache
+Cargo.lock
+MANIFEST
+celerybeat-schedule
+celerybeat.pid
+coverage.xml
+db.sqlite3
+db.sqlite3-journal
+dmypy.json
+ipython_config.py
+local_settings.py
+nosetests.xml
+pip-delete-this-directory.txt
+pip-log.txt
+pip-selfcheck.json
+uv.lock
+
+# folders
+*.egg-info/
+.eggs/
+.hypothesis/
+.idea/
+.ipynb_checkpoints/
+.mypy_cache/
+.nox/
+.pytest_cache/
+.tox/
 .venv/
-env/
+.virtual_documents/
+.vscode/
+ENV/
+__pycache__/
+__pypackages__/
 bin/
 build/
 develop-eggs/
 dist/
+docs/_build/
+docs/site/
+downloads/
 eggs/
+env.bak/
+env/
+extra/
+htmlcov/
+include/
+instance/
 lib/
 lib64/
-parts/
-sdist/
-var/
-include/
 man/
+parts/
+pip-wheel-metadata/
+profile_default/
+sdist/
+share/python-wheels/
+site/
+target/
+var/
+venv.bak/
 venv/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-pip-selfcheck.json
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.coverage
-.cache
-nosetests.xml
-coverage.xml
-
-# Translations
-*.mo
-
-# Mr Developer
-.mr.developer.cfg
-.project
-.pydevproject
-
-# Rope
-.ropeproject
-
-# Django stuff:
-*.log
-*.pot
-
-.DS_Store
-
-# Sphinx documentation
-docs/_build/
-
-# PyCharm
-.idea/
-
-# VSCode
-.vscode/
-
-# Pyenv
-.python-version
+wheelhouse/
+wheels/
