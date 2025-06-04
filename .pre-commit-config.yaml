@@ -1,0 +1,38 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-added-large-files
+      - id: mixed-line-ending
+      - id: trailing-whitespace
+        exclude: CHANGELOG\.md$
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.7.1
+    hooks:
+      - id: nbstripout
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.5
+    hooks:
+      - id: ruff-format
+        stages: [pre-commit]
+        args: ["--config", "pyproject.toml"]
+        types_or: [python, jupyter]
+      - id: ruff
+        stages: [pre-commit]
+        args: ["--fix", "--config", "pyproject.toml"]
+        types_or: [python]
+  - repo: local
+    hooks:
+      - id: prettier
+        name: prettier
+        entry: npx prettier --write
+        language: system
+        files: \.(js|jsx|ts|tsx|md|yaml|yml|json|css)$
+        exclude: CHANGELOG\.md$
+  - repo: local
+    hooks:
+      - id: pyright
+        name: pyright
+        entry: uv run --no-sync pyright
+        language: system
+        files: \.(py)$
