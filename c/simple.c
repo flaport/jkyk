@@ -19,9 +19,6 @@ void ramped_sin(float omega, float width, float delay, size_t q, float *result) 
     }
 }
 
-void to_bytes(const float *arr, size_t size, unsigned char **bytes) {
-    *bytes = (unsigned char *)arr;
-}
 
 int main() {
     const float Sc = 0.99 / sqrt(3.0);
@@ -70,11 +67,8 @@ int main() {
         }
     }
 
-    unsigned char *bytes;
-    to_bytes(EH, 2 * M * N * P * 3 * sizeof(float), &bytes);
-
     FILE *file = fopen("output.bin", "wb");
-    fwrite(bytes, sizeof(unsigned char), 2 * M * N * P * 3 * sizeof(float), file);
+    fwrite(EH, sizeof(float), 2 * M * N * P * 3, file);
     fclose(file);
 
     free(EH);
