@@ -1,11 +1,12 @@
 # files
-*.c
+*.bin
 *.cover
 *.egg
 *.egg-info
 *.log
 *.manifest
 *.mo
+*.out
 *.pot
 *.py,cover
 *.py[cod]
