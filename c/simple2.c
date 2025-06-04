@@ -22,8 +22,8 @@ void ramped_sin(float omega, float width, float delay, size_t q,
   }
 }
 
-size_t ix(int m, int n, int p, int c, int f) {
-  return ((((m + M) % M * N + (n + N) % N) * P + (p + P) % P) * C + c) * F + f;
+static inline size_t ix(int m, int n, int p, int c, int f) {
+  return (((f * M + (m + M) % M) * N + (n + N) % N) * P + (p + P) % P) * C + c;
 }
 
 int main() {
