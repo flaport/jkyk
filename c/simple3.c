@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define R 256 // max of M, N, P rounded up to a power of 2
 #define M 160
 #define N 100
 #define P 60
@@ -34,7 +35,7 @@ static inline uint32_t part_bits(uint32_t n) {
 
 // Morton 3D encoding - interleaves bits of x, y, z coordinates
 static inline uint32_t morton3D(int x, int y, int z) {
-  return part_bits(x) | (part_bits(y) << 1) | (part_bits(z) << 2);
+  return part_bits(z) | (part_bits(y) << 1) | (part_bits(x) << 2);
 }
 
 static inline size_t ix(int m, int n, int p, int c, int f) {
@@ -43,13 +44,13 @@ static inline size_t ix(int m, int n, int p, int c, int f) {
   int mod_n = (n + N) % N;
   int mod_p = (p + P) % P;
 
-  return f * M * N * P * C + C * morton3D(mod_m, mod_n, mod_p) + c;
+  return f * R * R * R * C + C * morton3D(mod_m, mod_n, mod_p) + c;
 }
 
 int main() {
   const float Sc = 0.99 / sqrt(3.0);
 
-  float *EH = (float *)calloc(M * N * P * C * F, sizeof(float));
+  float *EH = (float *)calloc(R * R * R * C * F, sizeof(float));
 
   float St[Q];
   ramped_sin(0.3, 5.0, 3.0, Q, St);
