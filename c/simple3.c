@@ -14,6 +14,9 @@ const int Sx = M / 2;
 const int Sy = N / 2;
 const int Sz = P / 2;
 
+// Add this global lookup table
+static uint32_t morton_lut[M][N][P];
+
 void ramped_sin(float omega, float width, float delay, size_t q,
                 float *result) {
   float t;
@@ -38,14 +41,27 @@ static inline uint32_t morton3D(int x, int y, int z) {
   return part_bits(z) | (part_bits(y) << 1) | (part_bits(x) << 2);
 }
 
+// Update the ix function to use lookup
 static inline size_t ix(int m, int n, int p, int c, int f) {
-  // Apply modulo with proper handling of negative indices
   int mod_m = (m + M) % M;
   int mod_n = (n + N) % N;
   int mod_p = (p + P) % P;
 
-  return f * R * R * R * C + C * morton3D(mod_m, mod_n, mod_p) + c;
+  // Fast O(1) lookup instead of expensive bit operations
+  return f * R * R * R * C + C * morton_lut[mod_m][mod_n][mod_p] + c;
 }
+
+// Add this initialization function
+void init_morton_lut() {
+  for (int m = 0; m < M; m++) {
+    for (int n = 0; n < N; n++) {
+      for (int p = 0; p < P; p++) {
+        morton_lut[m][n][p] = morton3D(m, n, p);
+      }
+    }
+  }
+}
+
 
 int main() {
   const float Sc = 0.99 / sqrt(3.0);
@@ -57,6 +73,9 @@ int main() {
 
   size_t f, g;
   int s, m, n, p, c0, c1, c2, j0, j1, j2;
+
+  // Call init_morton_lut() at the beginning of main()
+  init_morton_lut();
 
   for (size_t i = 0; i < 2 * Q; ++i) {
     f = i % 2;
