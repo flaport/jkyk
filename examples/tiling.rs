@@ -9,7 +9,7 @@ const C: isize = 3;
 const F: isize = 2;
 const Q: isize = 96;
 const W: isize = 8; // tile width
-const H: isize = 4; // tile height
+const H: isize = 8; // tile height
 
 const SX: isize = M / 2;
 const SY: isize = N / 2;
@@ -62,30 +62,30 @@ fn main() -> Result<()> {
                         for h in 0..H {
                             f = h % 2;
                             g = 1 - f;
-                            s = 1 - (2 * f);
+                            s = 1 - (2 * f); // sign: 1 for E [f=0], -1 for H [f=1]
                             let m0 = if mvm == 0 {
-                                om + h / 2
+                                om + h / 2 + 1
                             } else {
-                                om + W - 1 - (h + 1) / 2
+                                om - (h + 1) / 2
                             };
                             let m1 = if mvm == 0 {
-                                om + W - 1 - (h + 1) / 2
+                                om + W - (h + 1) / 2
                             } else {
-                                om + W + h / 2
+                                om + 1 + h / 2
                             };
-                            let n0 = on - (h + 1) / 2;
-                            let n1 = on + W - (h + 1) / 2;
-                            let p0 = op - (h + 1) / 2;
-                            let p1 = op + W - (h + 1) / 2;
+                            let n0 = on + 1 - (h + 1) / 2;
+                            let n1 = on + W + 1 - (h + 1) / 2;
+                            let p0 = op + 1 - (h + 1) / 2;
+                            let p1 = op + W + 1 - (h + 1) / 2;
                             for m in m0..m1 {
                                 for n in n0..n1 {
                                     for p in p0..p1 {
                                         for c0 in 0..C {
                                             c1 = (c0 + 1) % 3;
                                             c2 = (c0 + 2) % 3;
-                                            j0 = s * ((c0 == 0) as isize);
-                                            j1 = s * ((c0 == 1) as isize);
-                                            j2 = s * ((c0 == 2) as isize);
+                                            j0 = s * ((c0 == 0) as isize); // positive for E [f=0], negative for H [f=1]
+                                            j1 = s * ((c0 == 1) as isize); // positive for E [f=0], negative for H [f=1]
+                                            j2 = s * ((c0 == 2) as isize); // positive for E [f=0], negative for H [f=1]
                                             eh[ix(m, n, p, c0, f)] += sc
                                                 * (eh[ix(m, n, p, c2, g)]
                                                     - eh[ix(m - j2, n - j0, p - j1, c2, g)]

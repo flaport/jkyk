@@ -11,9 +11,9 @@ const Q: isize = 96;
 const W: isize = 8; // tile width
 const H: isize = 4; // tile height
 
-const SX: isize = M / 2;
-const SY: isize = N / 2;
-const SZ: isize = P / 2;
+const SX: isize = M / 2 + 1;
+const SY: isize = N / 2 + 1;
+const SZ: isize = P / 2 + 1;
 const MV: isize = 2; // 1 mountain + 1 valley = 2
 
 fn ramped_sin(omega: f32, width: f32, delay: f32, q: usize) -> Vec<f32> {
@@ -39,7 +39,8 @@ fn wix(m: isize, n: isize, p: isize, c: isize, f: isize) -> usize {
 fn main() -> Result<()> {
     let sc = 0.99 / (3.0_f32).sqrt();
     let mut eh = vec![0.0_f32; (M * N * P * C * F) as usize];
-    let st = ramped_sin(0.3, 5.0, 3.0, Q as usize);
+    eh[ix(SX, SY, SZ, 2, 0)] = 1.0;
+    //let st = ramped_sin(0.3, 5.0, 3.0, Q as usize);
 
     let oms = M / W; // offset idxs in x/m direction
     let ons = N / W; // offset idxs in y/n direction
@@ -53,16 +54,16 @@ fn main() -> Result<()> {
     let mut j0: isize;
     let mut j1: isize;
     let mut j2: isize;
-    let mut m0: isize;
+    let mut m0: isize = 0;
     let mut m1: isize;
-    let mut n0: isize;
+    let mut n0: isize = 0;
     let mut n1: isize;
-    let mut p0: isize;
+    let mut p0: isize = 0;
     let mut p1: isize;
     let mut fast = [0_f32; (W * W * W * 3 * 2) as usize];
 
-    for mut i in 0..(2 * Q / H) {
-        i *= H;
+    for _ in 0..(2 * Q / H) {
+        //i *= H;
         for mvm in 0..MV {
             // mvm: 0: mountain, 1: valley (m-direction)
             for mut om in 0..oms {
@@ -72,7 +73,9 @@ fn main() -> Result<()> {
                     for mut op in 0..ops {
                         op *= W; // op: offset in z/p direction
                         fill_fast(&mut fast, &eh, om, on, op);
-                        println!("{:?}", &fast[0..10]);
+                        if fast.iter().any(|&x| x > 0.0) {
+                            println!("{:?}", &fast);
+                        }
                         for h in 0..H {
                             f = h % 2;
                             g = 1 - f;
@@ -105,9 +108,6 @@ fn main() -> Result<()> {
                                                     - fast[wix(m - j2, n - j0, p - j1, c2, g)]
                                                     - fast[wix(m, n, p, c1, g)]
                                                     + fast[wix(m - j1, n - j2, p - j0, c1, g)]);
-                                        }
-                                        if f == 0 && om + m == SX && on + n == SY && op + p == SZ {
-                                            fast[wix(m, n, p, 2, 0)] += st[(i + h) as usize / 2];
                                         }
                                     }
                                 }
