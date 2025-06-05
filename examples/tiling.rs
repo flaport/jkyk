@@ -63,16 +63,8 @@ fn main() -> Result<()> {
                             f = h % 2;
                             g = 1 - f;
                             s = 1 - (2 * f); // sign: 1 for E [f=0], -1 for H [f=1]
-                            let m0 = if mvm == 0 {
-                                om + h / 2 + 1
-                            } else {
-                                om - (h + 1) / 2
-                            };
-                            let m1 = if mvm == 0 {
-                                om + W - (h + 1) / 2
-                            } else {
-                                om + 1 + h / 2
-                            };
+                            let m0 = om + (1 - mvm) * (h / 2 + 1) - mvm * (h + 1) / 2;
+                            let m1 = om + (1 - mvm) * (W - (h + 1) / 2) + mvm * (1 + h / 2);
                             let n0 = on - (h + 1) / 2;
                             let n1 = on + W - (h + 1) / 2;
                             let p0 = op - (h + 1) / 2;
