@@ -3,11 +3,11 @@
 #include <stdlib.h>
 
 #define M 160
-#define N 100
-#define P 60
+#define N 96
+#define P 64
 #define C 3
 #define F 2
-#define Q 100
+#define Q 96
 
 const int Sx = M / 2;
 const int Sy = N / 2;
@@ -51,11 +51,11 @@ int main() {
             j0 = s * (c0 == 0);
             j1 = s * (c0 == 1);
             j2 = s * (c0 == 2);
-            EH[ix(m - f, n - f, p - f, c0, f)] +=
-                Sc * (EH[ix(m - f, n - f, p - f, c2, g)] -
-                      EH[ix(m - j2 - f, n - j0 - f, p - j1 - f, c2, g)] -
-                      EH[ix(m - f, n - f, p - f, c1, g)] +
-                      EH[ix(m - j1 - f, n - j2 - f, p - j0 - f, c1, g)]);
+            EH[ix(m, n, p, c0, f)] +=
+                Sc * (EH[ix(m, n, p, c2, g)] -
+                      EH[ix(m - j2, n - j0, p - j1, c2, g)] -
+                      EH[ix(m, n, p, c1, g)] +
+                      EH[ix(m - j1, n - j2, p - j0, c1, g)]);
           }
         }
       }

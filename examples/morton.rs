@@ -2,12 +2,13 @@ use anyhow::Result;
 use std::fs::File;
 use std::io::Write;
 
-const M: isize = 128;
-const N: isize = 128;
-const P: isize = 128;
+const R: isize = 256;
+const M: isize = 160;
+const N: isize = 96;
+const P: isize = 64;
 const C: isize = 3;
 const F: isize = 2;
-const Q: isize = 100;
+const Q: isize = 96;
 
 const SX: isize = M / 2;
 const SY: isize = N / 2;
@@ -15,7 +16,7 @@ const SZ: isize = P / 2;
 
 fn main() -> Result<()> {
     let sc = 0.99 / (3.0_f32).sqrt();
-    let mut eh = vec![0.0_f32; (M * N * P * C * F) as usize];
+    let mut eh = vec![0.0_f32; (R * R * R * C * F) as usize];
     let st = ramped_sin(0.3, 5.0, 3.0, Q as usize);
 
     #[inline]
@@ -24,7 +25,7 @@ fn main() -> Result<()> {
         let nn = (n + N) % N;
         let pp = (p + P) % P;
         //((((f * M + mm) * N + nn) * P + pp) * C + c) as usize
-        (f * M * N * P * C) as usize + morton_3d(mm, nn, pp) * (C as usize) + (c as usize)
+        (f * R * R * R * C) as usize + morton_3d(mm, nn, pp) * (C as usize) + (c as usize)
     }
 
     let mut c1: isize;
@@ -50,11 +51,11 @@ fn main() -> Result<()> {
                         j0 = s * ((c0 == 0) as isize);
                         j1 = s * ((c0 == 1) as isize);
                         j2 = s * ((c0 == 2) as isize);
-                        eh[ix(m - f, n - f, p - f, c0, f)] += sc
-                            * (eh[ix(m - f, n - f, p - f, c2, g)]
-                                - eh[ix(m - j2 - f, n - j0 - f, p - j1 - f, c2, g)]
-                                - eh[ix(m - f, n - f, p - f, c1, g)]
-                                + eh[ix(m - j1 - f, n - j2 - f, p - j0 - f, c1, g)]);
+                        eh[ix(m, n, p, c0, f)] += sc
+                            * (eh[ix(m, n, p, c2, g)]
+                                - eh[ix(m - j2, n - j0, p - j1, c2, g)]
+                                - eh[ix(m, n, p, c1, g)]
+                                + eh[ix(m - j1, n - j2, p - j0, c1, g)]);
                     }
                 }
             }

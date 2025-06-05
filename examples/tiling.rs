@@ -86,23 +86,11 @@ fn main() -> Result<()> {
                                             j0 = s * ((c0 == 0) as isize);
                                             j1 = s * ((c0 == 1) as isize);
                                             j2 = s * ((c0 == 2) as isize);
-                                            eh[ix(m - f, n - f, p - f, c0, f)] += sc
-                                                * (eh[ix(m - f, n - f, p - f, c2, g)]
-                                                    - eh[ix(
-                                                        m - j2 - f,
-                                                        n - j0 - f,
-                                                        p - j1 - f,
-                                                        c2,
-                                                        g,
-                                                    )]
-                                                    - eh[ix(m - f, n - f, p - f, c1, g)]
-                                                    + eh[ix(
-                                                        m - j1 - f,
-                                                        n - j2 - f,
-                                                        p - j0 - f,
-                                                        c1,
-                                                        g,
-                                                    )]);
+                                            eh[ix(m, n, p, c0, f)] += sc
+                                                * (eh[ix(m, n, p, c2, g)]
+                                                    - eh[ix(m - j2, n - j0, p - j1, c2, g)]
+                                                    - eh[ix(m, n, p, c1, g)]
+                                                    + eh[ix(m - j1, n - j2, p - j0, c1, g)]);
                                         }
                                         if f == 0 && m == SX && n == SY && p == SZ {
                                             eh[ix(SX, SY, SZ, 2, 0)] += st[(i + h) as usize / 2];
