@@ -9,9 +9,9 @@ const C: usize = 3;
 const F: usize = 2;
 const Q: usize = 100;
 
-const Sx: usize = M / 2;
-const Sy: usize = N / 2;
-const Sz: usize = P / 2;
+const SX: usize = M / 2;
+const SY: usize = N / 2;
+const SZ: usize = P / 2;
 
 fn ramped_sin(omega: f32, width: f32, delay: f32, q: usize) -> Vec<f32> {
     let mut result = Vec::with_capacity(q);
@@ -32,9 +32,9 @@ fn ix(m: usize, dm: isize, n: usize, dn: isize, p: usize, dp: isize, c: usize, f
 }
 
 fn main() -> Result<()> {
-    let Sc = 0.99 / (3.0_f32).sqrt();
-    let mut EH = vec![0.0_f32; M * N * P * C * F];
-    let St = ramped_sin(0.3, 5.0, 3.0, Q);
+    let sc = 0.99 / (3.0_f32).sqrt();
+    let mut eh = vec![0.0_f32; M * N * P * C * F];
+    let st = ramped_sin(0.3, 5.0, 3.0, Q);
 
     let mut c1: usize;
     let mut c2: usize;
@@ -59,17 +59,17 @@ fn main() -> Result<()> {
                         j0 = s * ((c0 == 0) as isize);
                         j1 = s * ((c0 == 1) as isize);
                         j2 = s * ((c0 == 2) as isize);
-                        EH[ix(m, -f, n, -f, p, -f, c0, f as usize)] += Sc
-                            * (EH[ix(m, -f, n, -f, p, -f, c2, g as usize)]
-                                - EH[ix(m, -j2 - f, n, -j0 - f, p, -j1 - f, c2, g as usize)]
-                                - EH[ix(m, -f, n, -f, p, -f, c1, g as usize)]
-                                + EH[ix(m, -j1 - f, n, -j2 - f, p, -j0 - f, c1, g as usize)]);
+                        eh[ix(m, -f, n, -f, p, -f, c0, f as usize)] += sc
+                            * (eh[ix(m, -f, n, -f, p, -f, c2, g as usize)]
+                                - eh[ix(m, -j2 - f, n, -j0 - f, p, -j1 - f, c2, g as usize)]
+                                - eh[ix(m, -f, n, -f, p, -f, c1, g as usize)]
+                                + eh[ix(m, -j1 - f, n, -j2 - f, p, -j0 - f, c1, g as usize)]);
                     }
                 }
             }
         }
         if f == 0 {
-            EH[ix(Sx, 0, Sy, 0, Sz, 0, 2, 0)] += St[i / 2];
+            eh[ix(SX, 0, SY, 0, SZ, 0, 2, 0)] += st[i / 2];
         }
     }
 
@@ -77,7 +77,7 @@ fn main() -> Result<()> {
     let mut file = File::create("output.bin")?;
 
     // Convert f32 slice to bytes and write
-    let byte_data: Vec<u8> = EH[..2 * M * N * P * 3]
+    let byte_data: Vec<u8> = eh[..2 * M * N * P * 3]
         .iter()
         .flat_map(|&f| f.to_le_bytes())
         .collect();
