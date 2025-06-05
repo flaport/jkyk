@@ -121,11 +121,11 @@ fn main() -> Result<()> {
 fn fill_fast(fast: &mut [f32], eh: &[f32], om: isize, on: isize, op: isize) {
     fast.fill(0.0);
     for f in 0..F {
-        for (i, m) in (om..om + W).enumerate() {
-            for (j, n) in (on..on + W).enumerate() {
-                for (k, p) in (op..op + W).enumerate() {
+        for (i, m) in (om - W2..om + W).enumerate() {
+            for (j, n) in (on - W2..on + W).enumerate() {
+                for (k, p) in (op - W2..op + W).enumerate() {
                     for c0 in 0..C {
-                        fast[wix(i as isize + W2, j as isize + W2, k as isize + W2, c0, f)] =
+                        fast[wix(i as isize, j as isize, k as isize, c0, f)] =
                             eh[ix(m, n, p, c0, f)];
                     }
                 }
@@ -136,18 +136,9 @@ fn fill_fast(fast: &mut [f32], eh: &[f32], om: isize, on: isize, op: isize) {
 
 fn extract_fast(eh: &mut [f32], fast: &[f32], om: isize, on: isize, op: isize) {
     for f in 0..F {
-        for (i, m) in (om - W2..om + W2).enumerate() {
-            if m < 0 || m >= M {
-                continue;
-            }
-            for (j, n) in (on - W2..on + W2).enumerate() {
-                if n < 0 || n >= N {
-                    continue;
-                }
-                for (k, p) in (op - W2..op + W2).enumerate() {
-                    if p < 0 || p >= P {
-                        continue;
-                    }
+        for (i, m) in (om - W2..om + W).enumerate() {
+            for (j, n) in (on - W2..on + W).enumerate() {
+                for (k, p) in (op - W2..op + W).enumerate() {
                     for c0 in 0..C {
                         eh[ix(m, n, p, c0, f)] =
                             fast[wix(i as isize, j as isize, k as isize, c0, f)];
