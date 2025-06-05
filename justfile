@@ -30,6 +30,11 @@ nbrun:
 nbdocs:
 	find nbs -maxdepth 1 -mindepth 1 -name "*.ipynb" -not -path "*/.ipynb_checkpoints/*" -not -path "./.venv/*" | xargs parallel -j `nproc --all` uv run jupyter nbconvert --to markdown --embed-images {} --output-dir docs/nbs ':::'
 
+# Compile and run C programs (replaces c/run.sh)
+run filename:
+	mkdir -p target/c
+	gcc -lm -O3 -ffast-math "c/{{filename}}.c" -o "target/c/{{filename}}.out" && time "target/c/{{filename}}.out"
+
 tree:
 	@tree -a -I .git --gitignore
 
