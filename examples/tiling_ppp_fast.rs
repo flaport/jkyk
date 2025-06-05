@@ -7,7 +7,7 @@ const N: isize = 96;
 const P: isize = 64;
 const C: isize = 3;
 const F: isize = 2;
-const Q: isize = 64;
+const Q: isize = 96;
 const W: isize = 8; // tile width
 const H: isize = 8; // tile height
 const W2: isize = W / 2;
@@ -41,7 +41,6 @@ fn wix(m: isize, n: isize, p: isize, c: isize, f: isize) -> usize {
 fn main() -> Result<()> {
     let sc = 0.99 / (3.0_f32).sqrt();
     let mut eh = vec![0.0_f32; (M * N * P * C * F) as usize];
-    eh[ix(SX, SY, SZ, 2, 0)] = 1.0;
     let st = ramped_sin(0.3, 5.0, 3.0, Q as usize);
 
     let oms = M / W; // offset idxs in x/m direction
@@ -58,7 +57,8 @@ fn main() -> Result<()> {
     let mut j2: isize;
     let mut fast = [0_f32; (3 * W / 2 * 3 * W / 2 * 3 * W / 2 * C * F) as usize];
 
-    for _ in 0..(2 * Q / H) {
+    for mut i in 0..(2 * Q / H) {
+        i *= H;
         for mut om in 0..oms {
             om *= W; // om: offset in x/m direction
             for mut on in 0..ons {
@@ -91,9 +91,19 @@ fn main() -> Result<()> {
                                                 - fast[wix(m, n, p, c1, g)]
                                                 + fast[wix(m + j1, n + j2, p + j0, c1, g)]);
                                     }
-                                    //if f == 0 && m == SX && n == SY && p == SZ {
-                                    //    eh[ix(SX, SY, SZ, 2, 0)] += st[(i + h) as usize / 2];
-                                    //}
+                                    if f == 0
+                                        && m == SX - om + W2
+                                        && n == SY - on + W2
+                                        && p == SZ - op + W2
+                                    {
+                                        fast[wix(
+                                            SX - om + W2,
+                                            SY - on + W2,
+                                            SZ - op + W2,
+                                            2,
+                                            0,
+                                        )] += st[(i + h) as usize / 2];
+                                    }
                                 }
                             }
                         }
@@ -122,8 +132,17 @@ fn fill_fast(fast: &mut [f32], eh: &[f32], om: isize, on: isize, op: isize) {
     fast.fill(0.0);
     for f in 0..F {
         for (i, m) in (om - W2..om + W).enumerate() {
+            if m < 0 || m >= M {
+                continue;
+            }
             for (j, n) in (on - W2..on + W).enumerate() {
+                if n < 0 || n >= N {
+                    continue;
+                }
                 for (k, p) in (op - W2..op + W).enumerate() {
+                    if p < 0 || p >= P {
+                        continue;
+                    }
                     for c0 in 0..C {
                         fast[wix(i as isize, j as isize, k as isize, c0, f)] =
                             eh[ix(m, n, p, c0, f)];
@@ -137,8 +156,17 @@ fn fill_fast(fast: &mut [f32], eh: &[f32], om: isize, on: isize, op: isize) {
 fn extract_fast(eh: &mut [f32], fast: &[f32], om: isize, on: isize, op: isize) {
     for f in 0..F {
         for (i, m) in (om - W2..om + W).enumerate() {
+            if m < 0 || m >= M {
+                continue;
+            }
             for (j, n) in (on - W2..on + W).enumerate() {
+                if n < 0 || n >= N {
+                    continue;
+                }
                 for (k, p) in (op - W2..op + W).enumerate() {
+                    if p < 0 || p >= P {
+                        continue;
+                    }
                     for c0 in 0..C {
                         eh[ix(m, n, p, c0, f)] =
                             fast[wix(i as isize, j as isize, k as isize, c0, f)];
