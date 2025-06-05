@@ -75,9 +75,9 @@ fn main() -> Result<()> {
                                         for c0 in 0..C {
                                             c1 = (c0 + 1) % 3;
                                             c2 = (c0 + 2) % 3;
-                                            j0 = s * ((c0 == 0) as isize); // positive for E [f=0], negative for H [f=1]
-                                            j1 = s * ((c0 == 1) as isize); // positive for E [f=0], negative for H [f=1]
-                                            j2 = s * ((c0 == 2) as isize); // positive for E [f=0], negative for H [f=1]
+                                            j0 = s * ((c0 == 0) as isize); // negative for E [f=0], positive for H [f=1]
+                                            j1 = s * ((c0 == 1) as isize); // negative for E [f=0], positive for H [f=1]
+                                            j2 = s * ((c0 == 2) as isize); // negative for E [f=0], positive for H [f=1]
                                             eh[ix(m, n, p, c0, f)] += sc
                                                 * (eh[ix(m, n, p, c2, g)]
                                                     - eh[ix(m + j2, n + j0, p + j1, c2, g)]
