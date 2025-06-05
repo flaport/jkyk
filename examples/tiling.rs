@@ -73,10 +73,10 @@ fn main() -> Result<()> {
                             } else {
                                 om + 1 + h / 2
                             };
-                            let n0 = on + 1 - (h + 1) / 2;
-                            let n1 = on + W + 1 - (h + 1) / 2;
-                            let p0 = op + 1 - (h + 1) / 2;
-                            let p1 = op + W + 1 - (h + 1) / 2;
+                            let n0 = on - (h + 1) / 2;
+                            let n1 = on + W - (h + 1) / 2;
+                            let p0 = op - (h + 1) / 2;
+                            let p1 = op + W - (h + 1) / 2;
                             for m in m0..m1 {
                                 for n in n0..n1 {
                                     for p in p0..p1 {
