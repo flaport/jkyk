@@ -3,11 +3,11 @@ use std::fs::File;
 use std::io::Write;
 
 const M: isize = 160;
-const N: isize = 100;
-const P: isize = 60;
+const N: isize = 96;
+const P: isize = 64;
 const C: isize = 3;
 const F: isize = 2;
-const Q: isize = 100;
+const Q: isize = 96;
 
 const SX: isize = M / 2;
 const SY: isize = N / 2;

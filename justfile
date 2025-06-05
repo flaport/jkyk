@@ -30,14 +30,19 @@ nbrun:
 nbdocs:
     find nbs -maxdepth 1 -mindepth 1 -name "*.ipynb" -not -path "*/.ipynb_checkpoints/*" -not -path "./.venv/*" | xargs parallel -j `nproc --all` uv run jupyter nbconvert --to markdown --embed-images {} --output-dir docs/nbs ':::'
 
-c filename:
+c basename:
     mkdir -p target/c
-    gcc -lm -O3 -ffast-math "c/{{filename}}.c" -o "target/c/{{filename}}.out"
-    time "target/c/{{filename}}.out"
+    gcc -lm -O3 -ffast-math "c/{{basename}}.c" -o "target/c/{{basename}}.out"
+    time "target/c/{{basename}}.out"
 
-rust example:
-    cargo build --release --example "{{example}}"
-    time "target/release/examples/{{example}}"
+rust basename:
+    cargo build --release --example "{{basename}}"
+    time "target/release/examples/{{basename}}"
+
+zig basename:
+    mkdir -p target/zig
+    zig build-exe -OReleaseFast "zig/{{basename}}.zig" -femit-bin="target/zig/{{basename}}.out"
+    time "target/zig/{{basename}}.out"
 
 tree:
     @tree -a -I .git --gitignore
