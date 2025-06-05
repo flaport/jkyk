@@ -9,4 +9,5 @@ name = "jkyk"
 crate-type = ["cdylib"]
 
 [dependencies]
+anyhow = "1.0.98"
 pyo3 = "0.24.0"
