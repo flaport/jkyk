@@ -7,7 +7,7 @@ const N: isize = 96;
 const P: isize = 64;
 const C: isize = 3;
 const F: isize = 2;
-const Q: isize = 96;
+const Q: isize = 8 * 24;
 
 const SX: isize = M / 2;
 const SY: isize = N / 2;
