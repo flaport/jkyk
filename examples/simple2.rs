@@ -2,16 +2,16 @@ use anyhow::Result;
 use std::fs::File;
 use std::io::Write;
 
-const M: usize = 160;
-const N: usize = 100;
-const P: usize = 60;
-const C: usize = 3;
-const F: usize = 2;
-const Q: usize = 100;
+const M: isize = 160;
+const N: isize = 100;
+const P: isize = 60;
+const C: isize = 3;
+const F: isize = 2;
+const Q: isize = 100;
 
-const SX: usize = M / 2;
-const SY: usize = N / 2;
-const SZ: usize = P / 2;
+const SX: isize = M / 2;
+const SY: isize = N / 2;
+const SZ: isize = P / 2;
 
 fn ramped_sin(omega: f32, width: f32, delay: f32, q: usize) -> Vec<f32> {
     let mut result = Vec::with_capacity(q);
@@ -24,20 +24,17 @@ fn ramped_sin(omega: f32, width: f32, delay: f32, q: usize) -> Vec<f32> {
 }
 
 #[inline]
-fn ix(m: usize, dm: isize, n: usize, dn: isize, p: usize, dp: isize, c: usize, f: usize) -> usize {
-    let mm = ((m as isize + dm + M as isize) % (M as isize)) as usize;
-    let nn = ((n as isize + dn + N as isize) % (N as isize)) as usize;
-    let pp = ((p as isize + dp + P as isize) % (P as isize)) as usize;
-    return (((f * M + mm) * N + nn) * P + pp) * C + c;
+fn ix(m: isize, n: isize, p: isize, c: isize, f: isize) -> usize {
+    ((((f * M + (m + M) % M) * N + (n + N) % N) * P + (p + P) % P) * C + c) as usize
 }
 
 fn main() -> Result<()> {
     let sc = 0.99 / (3.0_f32).sqrt();
-    let mut eh = vec![0.0_f32; M * N * P * C * F];
-    let st = ramped_sin(0.3, 5.0, 3.0, Q);
+    let mut eh = vec![0.0_f32; (M * N * P * C * F) as usize];
+    let st = ramped_sin(0.3, 5.0, 3.0, Q as usize);
 
-    let mut c1: usize;
-    let mut c2: usize;
+    let mut c1: isize;
+    let mut c2: isize;
     let mut f: isize;
     let mut g: isize;
     let mut s: isize;
@@ -46,9 +43,9 @@ fn main() -> Result<()> {
     let mut j2: isize;
 
     for i in 0..(2 * Q) {
-        f = (i % 2) as isize;
+        f = i % 2;
         g = 1 - f;
-        s = 1 - (2 * f as isize);
+        s = 1 - (2 * f);
 
         for m in 0..M {
             for n in 0..N {
@@ -59,17 +56,17 @@ fn main() -> Result<()> {
                         j0 = s * ((c0 == 0) as isize);
                         j1 = s * ((c0 == 1) as isize);
                         j2 = s * ((c0 == 2) as isize);
-                        eh[ix(m, -f, n, -f, p, -f, c0, f as usize)] += sc
-                            * (eh[ix(m, -f, n, -f, p, -f, c2, g as usize)]
-                                - eh[ix(m, -j2 - f, n, -j0 - f, p, -j1 - f, c2, g as usize)]
-                                - eh[ix(m, -f, n, -f, p, -f, c1, g as usize)]
-                                + eh[ix(m, -j1 - f, n, -j2 - f, p, -j0 - f, c1, g as usize)]);
+                        eh[ix(m - f, n - f, p - f, c0, f)] += sc
+                            * (eh[ix(m - f, n - f, p - f, c2, g)]
+                                - eh[ix(m - j2 - f, n - j0 - f, p - j1 - f, c2, g)]
+                                - eh[ix(m - f, n - f, p - f, c1, g)]
+                                + eh[ix(m - j1 - f, n - j2 - f, p - j0 - f, c1, g)]);
                     }
                 }
             }
         }
         if f == 0 {
-            eh[ix(SX, 0, SY, 0, SZ, 0, 2, 0)] += st[i / 2];
+            eh[ix(SX, SY, SZ, 2, 0)] += st[i as usize / 2];
         }
     }
 
@@ -77,7 +74,7 @@ fn main() -> Result<()> {
     let mut file = File::create("output.bin")?;
 
     // Convert f32 slice to bytes and write
-    let byte_data: Vec<u8> = eh[..2 * M * N * P * 3]
+    let byte_data: Vec<u8> = eh[..(2 * M * N * P * 3) as usize]
         .iter()
         .flat_map(|&f| f.to_le_bytes())
         .collect();
