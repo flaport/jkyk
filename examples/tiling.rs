@@ -62,7 +62,7 @@ fn main() -> Result<()> {
                         for h in 0..H {
                             f = h % 2;
                             g = 1 - f;
-                            s = 1 - (2 * f); // sign: 1 for E [f=0], -1 for H [f=1]
+                            s = (2 * f) - 1; // sign: -1 for E [f=0], +1 for H [f=1]
                             let m0 = om + (1 - mvm) * (h / 2 + 1) - mvm * (h + 1) / 2;
                             let m1 = om + (1 - mvm) * (W - (h + 1) / 2) + mvm * (1 + h / 2);
                             let n0 = on - (h + 1) / 2;
@@ -80,9 +80,9 @@ fn main() -> Result<()> {
                                             j2 = s * ((c0 == 2) as isize); // positive for E [f=0], negative for H [f=1]
                                             eh[ix(m, n, p, c0, f)] += sc
                                                 * (eh[ix(m, n, p, c2, g)]
-                                                    - eh[ix(m - j2, n - j0, p - j1, c2, g)]
+                                                    - eh[ix(m + j2, n + j0, p + j1, c2, g)]
                                                     - eh[ix(m, n, p, c1, g)]
-                                                    + eh[ix(m - j1, n - j2, p - j0, c1, g)]);
+                                                    + eh[ix(m + j1, n + j2, p + j0, c1, g)]);
                                         }
                                         if f == 0 && m == SX && n == SY && p == SZ {
                                             eh[ix(SX, SY, SZ, 2, 0)] += st[(i + h) as usize / 2];
