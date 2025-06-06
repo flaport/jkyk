@@ -7,7 +7,7 @@ const N: isize = 96;
 const P: isize = 64;
 const C: isize = 3;
 const F: isize = 2;
-const Q: isize = 64;
+const Q: isize = 96;
 const W: isize = 8;
 const H: isize = 8;
 const W2: isize = W / 2;
@@ -41,7 +41,6 @@ fn wix(m: isize, n: isize, p: isize, c: isize, f: isize) -> usize {
 fn main() -> Result<()> {
     let sc = 0.99 / (3.0_f32).sqrt();
     let mut eh = vec![0.0_f32; (M * N * P * C * F) as usize];
-    eh[ix(SX, SY, SZ, 2, 0)] = 1.0;
     let st = ramped_sin(0.3, 5.0, 3.0, Q as usize);
 
     let oms = M / W; // offset idxs in x/m direction
@@ -79,15 +78,32 @@ fn main() -> Result<()> {
                                     f = h % 2;
                                     g = 1 - f;
                                     s = (2 * f) - 1; // sign: -1 for E [f=0], +1 for H [f=1]
+
+                                    // global coords
+                                    let gm0 =
+                                        om + (1 - mvm) * (h / 2 + 1) + mvm * (W - (h + 1) / 2);
+                                    let gm1 =
+                                        om + (1 - mvm) * (W - (h + 1) / 2) + mvm * (W + 1 + h / 2);
+                                    let gn0 =
+                                        on + (1 - mvn) * (h / 2 + 1) + mvn * (W - (h + 1) / 2);
+                                    let gn1 =
+                                        on + (1 - mvn) * (W - (h + 1) / 2) + mvn * (W + 1 + h / 2);
+                                    let gp0 =
+                                        op + (1 - mvp) * (h / 2 + 1) + mvp * (W - (h + 1) / 2);
+                                    let gp1 =
+                                        op + (1 - mvp) * (W - (h + 1) / 2) + mvp * (W + 1 + h / 2);
+
+                                    // local coords
                                     let m0 = (1 - mvm) * (h / 2 + 1) + mvm * (W2 - (h + 1) / 2);
                                     let m1 = (1 - mvm) * (W - (h + 1) / 2) + mvm * (W2 + 1 + h / 2);
                                     let n0 = (1 - mvn) * (h / 2 + 1) + mvn * (W2 - (h + 1) / 2);
                                     let n1 = (1 - mvn) * (W - (h + 1) / 2) + mvn * (W2 + 1 + h / 2);
                                     let p0 = (1 - mvp) * (h / 2 + 1) + mvp * (W2 - (h + 1) / 2);
                                     let p1 = (1 - mvp) * (W - (h + 1) / 2) + mvp * (W2 + 1 + h / 2);
-                                    for m in m0..m1 {
-                                        for n in n0..n1 {
-                                            for p in p0..p1 {
+
+                                    for (m, gm) in (m0..m1).zip(gm0..gm1) {
+                                        for (n, gn) in (n0..n1).zip(gn0..gn1) {
+                                            for (p, gp) in (p0..p1).zip(gp0..gp1) {
                                                 for c0 in 0..C {
                                                     c1 = (c0 + 1) % 3;
                                                     c2 = (c0 + 2) % 3;
@@ -112,14 +128,10 @@ fn main() -> Result<()> {
                                                                 g,
                                                             )]);
                                                 }
-                                                //if f == 0
-                                                //    && m == SX - om
-                                                //    && n == SY - om
-                                                //    && p == SZ - om
-                                                //{
-                                                //    fast[wix(SX - om, SY - om, SZ - om, 2, 0)] +=
-                                                //        st[(i + h) as usize / 2];
-                                                //}
+                                                if f == 0 && gm == SX && gn == SY && gp == SZ {
+                                                    fast[wix(m, n, p, 2, 0)] +=
+                                                        st[(i + h) as usize / 2];
+                                                }
                                             }
                                         }
                                     }

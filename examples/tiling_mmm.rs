@@ -7,7 +7,7 @@ const N: isize = 96;
 const P: isize = 64;
 const C: isize = 3;
 const F: isize = 2;
-const Q: isize = 64;
+const Q: isize = 96;
 const W: isize = 8; // tile width
 const H: isize = 8; // tile height
 
@@ -34,7 +34,6 @@ fn ix(m: isize, n: isize, p: isize, c: isize, f: isize) -> usize {
 fn main() -> Result<()> {
     let sc = 0.99 / (3.0_f32).sqrt();
     let mut eh = vec![0.0_f32; (M * N * P * C * F) as usize];
-    eh[ix(SX, SY, SZ, 2, 0)] = 1.0;
     let st = ramped_sin(0.3, 5.0, 3.0, Q as usize);
 
     let oms = M / W; // offset idxs in x/m direction
@@ -99,10 +98,10 @@ fn main() -> Result<()> {
                                                                 g,
                                                             )]);
                                                 }
-                                                //if f == 0 && m == SX && n == SY && p == SZ {
-                                                //    eh[ix(SX, SY, SZ, 2, 0)] +=
-                                                //        st[(i + h) as usize / 2];
-                                                //}
+                                                if f == 0 && m == SX && n == SY && p == SZ {
+                                                    eh[ix(SX, SY, SZ, 2, 0)] +=
+                                                        st[(i + h) as usize / 2];
+                                                }
                                             }
                                         }
                                     }
