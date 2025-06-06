@@ -19,6 +19,7 @@ const long SX = M / 2;
 const long SY = N / 2;
 const long SZ = P / 2;
 const long MV = 2; // 1 mountain + 1 valley = 2
+const long FS = W * W32 * W32 * C * F;
 
 void ramped_sin(float omega, float width, float delay, int q, float *result)
 {
@@ -32,12 +33,16 @@ void ramped_sin(float omega, float width, float delay, int q, float *result)
 
 static inline size_t ix(long m, long n, long p, long c, long f)
 {
-    return (size_t)((((f * M + (m + M) % M) * N + (n + N) % N) * P + (p + P) % P) * C + c);
+    long m_wrapped = (m < 0) ? (m + M) : ((m >= M) ? (m - M) : m);
+    long n_wrapped = (n < 0) ? (n + N) : ((n >= N) ? (n - N) : n);
+    long p_wrapped = (p < 0) ? (p + P) : ((p >= P) ? (p - P) : p);
+    return (size_t)((((f * M + m_wrapped) * N + n_wrapped) * P + p_wrapped) * C + c);
 }
 
 static inline size_t wix(long m, long n, long p, long c, long f)
 {
-    return (size_t)((((f * W + (m + W) % W) * W32 + (n + W32) % W32) * W32 + (p + W32) % W32) * C + c);
+    long m_wrapped = (m < 0) ? (m + W) : ((m >= W) ? (m - W) : m);
+    return (size_t)((((f * W + m_wrapped) * W32 + n) * W32 + p) * C + c);
 }
 
 void fill_fast(float *fast, float *eh, long om, long on, long op, long mvm);
@@ -54,6 +59,9 @@ int main()
     long ons = N / W + 1; // offset idxs in y/n direction (one extra bc no periodic boundaries)
     long ops = P / W + 1; // offset idxs in z/p direction (one extra bc no periodic boundaries)
 
+    static float fast[FS];
+    #pragma omp threadprivate(fast)
+
     for (long i = 0; i < (2 * Q / H); i++)
     {
         long i_times_H = i * H;
@@ -62,7 +70,6 @@ int main()
             #pragma omp parallel for
             for (long om = 0; om < oms; om++)
             {
-                float fast[W * W32 * W32 * C * F];
                 long c1;
                 long c2;
                 long f;
@@ -155,7 +162,7 @@ int main()
     return 0;
 }
 
-void fill_fast(float *fast, float *eh, long om, long on, long op, long mvm)
+void fill_fast(float *restrict fast, float *restrict eh, long om, long on, long op, long mvm)
 {
     memset(fast, 0, (size_t)(W * W32 * W32 * C * F) * sizeof(float));
     long dwm = mvm * W2;
@@ -188,7 +195,7 @@ void fill_fast(float *fast, float *eh, long om, long on, long op, long mvm)
     }
 }
 
-void extract_fast(float *eh, float *fast, long om, long on, long op, long mvm)
+void extract_fast(float *restrict eh, float *restrict fast, long om, long on, long op, long mvm)
 {
     long dwm = mvm * W2;
     for (long f = 0; f < F; f++)
