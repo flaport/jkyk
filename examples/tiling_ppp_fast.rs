@@ -11,7 +11,7 @@ const Q: isize = 96;
 const W: isize = 8; // tile width
 const H: isize = 6; // tile height
 const W2: isize = W / 2;
-const W32: isize = 3 * W / 2;
+const W32: isize = 3 * W2;
 
 const SX: isize = M / 2;
 const SY: isize = N / 2;

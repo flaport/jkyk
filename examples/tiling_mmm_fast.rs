@@ -55,9 +55,8 @@ fn main() -> Result<()> {
     let mut j1: isize;
     let mut j2: isize;
 
-    // we fast to have dims of WP1 in stead of W, to handle the case of H==W.
-    // it's probably more efficient to have H=W-2 instead. In that case dims
-    // can be of size W. See tilingvisualization.ipynb
+    // NOTE: when W == H, the fast array should be of size (W+1 * W+1 * W+1 * C * F)!
+    // in that case also the wix() function should be adjusted to use W+1 instead.
     let mut fast = [0_f32; (W * W * W * C * F) as usize];
 
     for mut i in 0..(2 * Q / H) {
