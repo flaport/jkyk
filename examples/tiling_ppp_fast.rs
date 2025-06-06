@@ -70,15 +70,26 @@ fn main() -> Result<()> {
                         f = h % 2;
                         g = 1 - f;
                         s = (2 * f) - 1; // sign: -1 for E [f=0], +1 for H [f=1]
+
+                        // global coords
+                        let gm0 = om - (h + 1) / 2;
+                        let gm1 = om + W - (h + 1) / 2;
+                        let gn0 = on - (h + 1) / 2;
+                        let gn1 = on + W - (h + 1) / 2;
+                        let gp0 = op - (h + 1) / 2;
+                        let gp1 = op + W - (h + 1) / 2;
+
+                        // local coords
                         let m0 = W2 - (h + 1) / 2;
                         let m1 = W32 - (h + 1) / 2;
                         let n0 = W2 - (h + 1) / 2;
                         let n1 = W32 - (h + 1) / 2;
                         let p0 = W2 - (h + 1) / 2;
                         let p1 = W32 - (h + 1) / 2;
-                        for m in m0..m1 {
-                            for n in n0..n1 {
-                                for p in p0..p1 {
+
+                        for (m, gm) in (m0..m1).zip(gm0..gm1) {
+                            for (n, gn) in (n0..n1).zip(gn0..gn1) {
+                                for (p, gp) in (p0..p1).zip(gp0..gp1) {
                                     for c0 in 0..C {
                                         c1 = (c0 + 1) % 3;
                                         c2 = (c0 + 2) % 3;
@@ -91,18 +102,8 @@ fn main() -> Result<()> {
                                                 - fast[wix(m, n, p, c1, g)]
                                                 + fast[wix(m + j1, n + j2, p + j0, c1, g)]);
                                     }
-                                    if f == 0
-                                        && m == SX - om + W2
-                                        && n == SY - on + W2
-                                        && p == SZ - op + W2
-                                    {
-                                        fast[wix(
-                                            SX - om + W2,
-                                            SY - on + W2,
-                                            SZ - op + W2,
-                                            2,
-                                            0,
-                                        )] += st[(i + h) as usize / 2];
+                                    if f == 0 && gm == SX && gn == SY && gp == SZ {
+                                        fast[wix(m, n, p, 2, 0)] += st[(i + h) as usize / 2];
                                     }
                                 }
                             }
