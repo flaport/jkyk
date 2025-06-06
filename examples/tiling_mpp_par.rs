@@ -1,8 +1,22 @@
 use anyhow::Result;
 use rayon::prelude::*;
+use std::cell::UnsafeCell;
 use std::fs::File;
 use std::io::Write;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+
+// Safe wrapper for UnsafeCell that implements Sync
+// SAFETY: We guarantee no overlapping access patterns
+struct SyncUnsafeCell<T>(UnsafeCell<T>);
+unsafe impl<T: Send> Sync for SyncUnsafeCell<T> {}
+impl<T> SyncUnsafeCell<T> {
+    fn new(value: T) -> Self {
+        Self(UnsafeCell::new(value))
+    }
+    fn get(&self) -> *mut T {
+        self.0.get()
+    }
+}
 
 const M: isize = 160;
 const N: isize = 96;
@@ -42,7 +56,10 @@ fn wix(m: isize, n: isize, p: isize, c: isize, f: isize) -> usize {
 
 fn main() -> Result<()> {
     let sc = 0.99 / (3.0_f32).sqrt();
-    let eh = Arc::new(Mutex::new(vec![0.0_f32; (M * N * P * C * F) as usize]));
+    let eh = Arc::new(SyncUnsafeCell::new(vec![
+        0.0_f32;
+        (M * N * P * C * F) as usize
+    ]));
     let st = ramped_sin(0.3, 5.0, 3.0, Q as usize);
 
     let oms = M / W; // offset idxs in x/m direction
@@ -67,9 +84,9 @@ fn main() -> Result<()> {
                     on *= W; // on: offset in y/n direction
                     for mut op in 0..ops {
                         op *= W; // op: offset in z/p direction
-                        {
-                            let eh_guard = eh.lock().unwrap();
-                            fill_fast(&mut fast, &*eh_guard, om, on, op, mvm);
+                        unsafe {
+                            let eh_ptr = &*eh.get();
+                            fill_fast(&mut fast, eh_ptr, om, on, op, mvm);
                         }
                         for h in 0..H {
                             f = h % 2;
@@ -114,9 +131,9 @@ fn main() -> Result<()> {
                                 }
                             }
                         }
-                        {
-                            let mut eh_guard = eh.lock().unwrap();
-                            extract_fast(&mut *eh_guard, &fast, om, on, op, mvm);
+                        unsafe {
+                            let eh_ptr = &mut *eh.get();
+                            extract_fast(eh_ptr, &fast, om, on, op, mvm);
                         }
                     }
                 }
@@ -128,11 +145,13 @@ fn main() -> Result<()> {
     let mut file = File::create("output.bin")?;
 
     // Convert f32 slice to bytes and write
-    let eh_guard = eh.lock().unwrap();
-    let byte_data: Vec<u8> = eh_guard[..(2 * M * N * P * 3) as usize]
-        .iter()
-        .flat_map(|&f| f.to_le_bytes())
-        .collect();
+    let byte_data: Vec<u8> = unsafe {
+        let eh_ptr = &*eh.get();
+        eh_ptr[..(2 * M * N * P * 3) as usize]
+            .iter()
+            .flat_map(|&f| f.to_le_bytes())
+            .collect()
+    };
 
     file.write_all(&byte_data)?;
 
