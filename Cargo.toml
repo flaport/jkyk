@@ -11,6 +11,7 @@ crate-type = ["cdylib"]
 [dependencies]
 anyhow = "1.0.98"
 pyo3 = "0.24.0"
+rayon = "1.10.0"
 
 [profile.release]
 opt-level = 3
