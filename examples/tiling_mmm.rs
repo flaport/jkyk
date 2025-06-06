@@ -9,7 +9,7 @@ const C: isize = 3;
 const F: isize = 2;
 const Q: isize = 96;
 const W: isize = 8; // tile width
-const H: isize = 8; // tile height
+const H: isize = 6; // tile height
 
 const SX: isize = M / 2;
 const SY: isize = N / 2;
@@ -65,12 +65,15 @@ fn main() -> Result<()> {
                                     f = h % 2;
                                     g = 1 - f;
                                     s = (2 * f) - 1; // sign: -1 for E [f=0], +1 for H [f=1]
-                                    let m0 = om + (1 - mvm) * (h / 2 + 1) - mvm * (h + 1) / 2;
-                                    let m1 = om + (1 - mvm) * (W - (h + 1) / 2) + mvm * (1 + h / 2);
-                                    let n0 = on + (1 - mvn) * (h / 2 + 1) - mvn * (h + 1) / 2;
-                                    let n1 = on + (1 - mvn) * (W - (h + 1) / 2) + mvn * (1 + h / 2);
-                                    let p0 = op + (1 - mvp) * (h / 2 + 1) - mvp * (h + 1) / 2;
-                                    let p1 = op + (1 - mvp) * (W - (h + 1) / 2) + mvp * (1 + h / 2);
+                                    let m0 = om + (1 - mvm) * (h / 2 + 1) + mvm * (W - (h + 1) / 2);
+                                    let m1 =
+                                        om + (1 - mvm) * (W - (h + 1) / 2) + mvm * (W + 1 + h / 2);
+                                    let n0 = on + (1 - mvn) * (h / 2 + 1) + mvn * (W - (h + 1) / 2);
+                                    let n1 =
+                                        on + (1 - mvn) * (W - (h + 1) / 2) + mvn * (W + 1 + h / 2);
+                                    let p0 = op + (1 - mvp) * (h / 2 + 1) + mvp * (W - (h + 1) / 2);
+                                    let p1 =
+                                        op + (1 - mvp) * (W - (h + 1) / 2) + mvp * (W + 1 + h / 2);
                                     for m in m0..m1 {
                                         for n in n0..n1 {
                                             for p in p0..p1 {

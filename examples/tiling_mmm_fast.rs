@@ -9,9 +9,8 @@ const C: isize = 3;
 const F: isize = 2;
 const Q: isize = 96;
 const W: isize = 8;
-const H: isize = 8;
+const H: isize = 6;
 const W2: isize = W / 2;
-const WP1: isize = W + 1;
 
 const SX: isize = M / 2;
 const SY: isize = N / 2;
@@ -35,7 +34,7 @@ fn ix(m: isize, n: isize, p: isize, c: isize, f: isize) -> usize {
 
 #[inline]
 fn wix(m: isize, n: isize, p: isize, c: isize, f: isize) -> usize {
-    ((((f * WP1 + m) * WP1 + n) * WP1 + p) * C + c) as usize // no bounds wrapping needed
+    ((((f * W + m) * W + n) * W + p) * C + c) as usize // no bounds wrapping needed
 }
 
 fn main() -> Result<()> {
@@ -59,7 +58,7 @@ fn main() -> Result<()> {
     // we fast to have dims of WP1 in stead of W, to handle the case of H==W.
     // it's probably more efficient to have H=W-2 instead. In that case dims
     // can be of size W. See tilingvisualization.ipynb
-    let mut fast = [0_f32; (WP1 * WP1 * WP1 * C * F) as usize];
+    let mut fast = [0_f32; (W * W * W * C * F) as usize];
 
     for mut i in 0..(2 * Q / H) {
         i *= H;
@@ -173,9 +172,9 @@ fn fill_fast(
     let dwn = mvn * W2;
     let dwp = mvp * W2;
     for f in 0..F {
-        for (i, m) in (om + dwm..om + W + dwm + 1).enumerate() {
-            for (j, n) in (on + dwn..on + W + dwn + 1).enumerate() {
-                for (k, p) in (op + dwp..op + W + dwp + 1).enumerate() {
+        for (i, m) in (om + dwm..om + W + dwm).enumerate() {
+            for (j, n) in (on + dwn..on + W + dwn).enumerate() {
+                for (k, p) in (op + dwp..op + W + dwp).enumerate() {
                     for c0 in 0..C {
                         fast[wix(i as isize, j as isize, k as isize, c0, f)] =
                             eh[ix(m, n, p, c0, f)];
