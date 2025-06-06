@@ -9,7 +9,7 @@ const C: isize = 3;
 const F: isize = 2;
 const Q: isize = 96;
 const W: isize = 8; // tile width
-const H: isize = 8; // tile height
+const H: isize = 6; // tile height
 const W2: isize = W / 2;
 const W32: isize = 3 * W / 2;
 
@@ -43,9 +43,9 @@ fn main() -> Result<()> {
     let mut eh = vec![0.0_f32; (M * N * P * C * F) as usize];
     let st = ramped_sin(0.3, 5.0, 3.0, Q as usize);
 
-    let oms = M / W; // offset idxs in x/m direction
-    let ons = N / W; // offset idxs in y/n direction
-    let ops = P / W; // offset idxs in z/p direction
+    let oms = M / W + 1; // offset idxs in x/m direction (one extra bc no periodic boundaries)
+    let ons = N / W + 1; // offset idxs in y/n direction (one extra bc no periodic boundaries)
+    let ops = P / W + 1; // offset idxs in z/p direction (one extra bc no periodic boundaries)
 
     let mut c1: isize;
     let mut c2: isize;
