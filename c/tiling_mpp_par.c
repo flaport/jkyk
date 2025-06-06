@@ -59,7 +59,7 @@ int main()
         long i_times_H = i * H;
         for (long mvm = 0; mvm < MV; mvm++)
         {
-#pragma omp parallel for
+            #pragma omp parallel for
             for (long om = 0; om < oms; om++)
             {
                 float fast[W * W32 * W32 * C * F];
