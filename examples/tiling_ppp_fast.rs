@@ -55,7 +55,7 @@ fn main() -> Result<()> {
     let mut j0: isize;
     let mut j1: isize;
     let mut j2: isize;
-    let mut fast = [0_f32; (3 * W / 2 * 3 * W / 2 * 3 * W / 2 * C * F) as usize];
+    let mut fast = [0_f32; (W32 * W32 * W32 * C * F) as usize];
 
     for mut i in 0..(2 * Q / H) {
         i *= H;

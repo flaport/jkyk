@@ -8,8 +8,10 @@ const P: isize = 64;
 const C: isize = 3;
 const F: isize = 2;
 const Q: isize = 64;
-const W: isize = 8; // tile width
-const H: isize = 8; // tile height
+const W: isize = 8;
+const H: isize = 8;
+const W2: isize = W / 2;
+const WP1: isize = W + 1;
 
 const SX: isize = M / 2;
 const SY: isize = N / 2;
@@ -31,6 +33,11 @@ fn ix(m: isize, n: isize, p: isize, c: isize, f: isize) -> usize {
     ((((f * M + (m + M) % M) * N + (n + N) % N) * P + (p + P) % P) * C + c) as usize
 }
 
+#[inline]
+fn wix(m: isize, n: isize, p: isize, c: isize, f: isize) -> usize {
+    ((((f * WP1 + m) * WP1 + n) * WP1 + p) * C + c) as usize // no bounds wrapping needed
+}
+
 fn main() -> Result<()> {
     let sc = 0.99 / (3.0_f32).sqrt();
     let mut eh = vec![0.0_f32; (M * N * P * C * F) as usize];
@@ -50,6 +57,11 @@ fn main() -> Result<()> {
     let mut j1: isize;
     let mut j2: isize;
 
+    // we fast to have dims of WP1 in stead of W, to handle the case of H==W.
+    // it's probably more efficient to have H=W-2 instead. In that case dims
+    // can be of size W. See tilingvisualization.ipynb
+    let mut fast = [0_f32; (WP1 * WP1 * WP1 * C * F) as usize];
+
     for mut i in 0..(2 * Q / H) {
         i *= H;
         for mvm in 0..MV {
@@ -62,16 +74,17 @@ fn main() -> Result<()> {
                             on *= W; // on: offset in y/n direction
                             for mut op in 0..ops {
                                 op *= W; // op: offset in z/p direction
+                                fill_fast(&mut fast, &eh, om, mvm, on, mvn, op, mvp);
                                 for h in 0..H {
                                     f = h % 2;
                                     g = 1 - f;
                                     s = (2 * f) - 1; // sign: -1 for E [f=0], +1 for H [f=1]
-                                    let m0 = om + (1 - mvm) * (h / 2 + 1) - mvm * (h + 1) / 2;
-                                    let m1 = om + (1 - mvm) * (W - (h + 1) / 2) + mvm * (1 + h / 2);
-                                    let n0 = on + (1 - mvn) * (h / 2 + 1) - mvn * (h + 1) / 2;
-                                    let n1 = on + (1 - mvn) * (W - (h + 1) / 2) + mvn * (1 + h / 2);
-                                    let p0 = op + (1 - mvp) * (h / 2 + 1) - mvp * (h + 1) / 2;
-                                    let p1 = op + (1 - mvp) * (W - (h + 1) / 2) + mvp * (1 + h / 2);
+                                    let m0 = (1 - mvm) * (h / 2 + 1) + mvm * (W2 - (h + 1) / 2);
+                                    let m1 = (1 - mvm) * (W - (h + 1) / 2) + mvm * (W2 + 1 + h / 2);
+                                    let n0 = (1 - mvn) * (h / 2 + 1) + mvn * (W2 - (h + 1) / 2);
+                                    let n1 = (1 - mvn) * (W - (h + 1) / 2) + mvn * (W2 + 1 + h / 2);
+                                    let p0 = (1 - mvp) * (h / 2 + 1) + mvp * (W2 - (h + 1) / 2);
+                                    let p1 = (1 - mvp) * (W - (h + 1) / 2) + mvp * (W2 + 1 + h / 2);
                                     for m in m0..m1 {
                                         for n in n0..n1 {
                                             for p in p0..p1 {
@@ -81,17 +94,17 @@ fn main() -> Result<()> {
                                                     j0 = s * ((c0 == 0) as isize); // negative for E [f=0], positive for H [f=1]
                                                     j1 = s * ((c0 == 1) as isize); // negative for E [f=0], positive for H [f=1]
                                                     j2 = s * ((c0 == 2) as isize); // negative for E [f=0], positive for H [f=1]
-                                                    eh[ix(m, n, p, c0, f)] += sc
-                                                        * (eh[ix(m, n, p, c2, g)]
-                                                            - eh[ix(
+                                                    fast[wix(m, n, p, c0, f)] += sc
+                                                        * (fast[wix(m, n, p, c2, g)]
+                                                            - fast[wix(
                                                                 m + j2,
                                                                 n + j0,
                                                                 p + j1,
                                                                 c2,
                                                                 g,
                                                             )]
-                                                            - eh[ix(m, n, p, c1, g)]
-                                                            + eh[ix(
+                                                            - fast[wix(m, n, p, c1, g)]
+                                                            + fast[wix(
                                                                 m + j1,
                                                                 n + j2,
                                                                 p + j0,
@@ -99,14 +112,19 @@ fn main() -> Result<()> {
                                                                 g,
                                                             )]);
                                                 }
-                                                //if f == 0 && m == SX && n == SY && p == SZ {
-                                                //    eh[ix(SX, SY, SZ, 2, 0)] +=
+                                                //if f == 0
+                                                //    && m == SX - om
+                                                //    && n == SY - om
+                                                //    && p == SZ - om
+                                                //{
+                                                //    fast[wix(SX - om, SY - om, SZ - om, 2, 0)] +=
                                                 //        st[(i + h) as usize / 2];
                                                 //}
                                             }
                                         }
                                     }
                                 }
+                                extract_fast(&mut eh, &fast, om, mvm, on, mvn, op, mvp);
                             }
                         }
                     }
@@ -127,4 +145,58 @@ fn main() -> Result<()> {
     file.write_all(&byte_data)?;
 
     Ok(())
+}
+
+fn fill_fast(
+    fast: &mut [f32],
+    eh: &[f32],
+    om: isize,
+    mvm: isize,
+    on: isize,
+    mvn: isize,
+    op: isize,
+    mvp: isize,
+) {
+    let dwm = mvm * W2;
+    let dwn = mvn * W2;
+    let dwp = mvp * W2;
+    for f in 0..F {
+        for (i, m) in (om + dwm..om + W + dwm + 1).enumerate() {
+            for (j, n) in (on + dwn..on + W + dwn + 1).enumerate() {
+                for (k, p) in (op + dwp..op + W + dwp + 1).enumerate() {
+                    for c0 in 0..C {
+                        fast[wix(i as isize, j as isize, k as isize, c0, f)] =
+                            eh[ix(m, n, p, c0, f)];
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn extract_fast(
+    eh: &mut [f32],
+    fast: &[f32],
+    om: isize,
+    mvm: isize,
+    on: isize,
+    mvn: isize,
+    op: isize,
+    mvp: isize,
+) {
+    let dwm = mvm * W2;
+    let dwn = mvn * W2;
+    let dwp = mvp * W2;
+    for f in 0..F {
+        for (i, m) in (om + dwm..om + W + dwm).enumerate() {
+            for (j, n) in (on + dwn..on + W + dwn).enumerate() {
+                for (k, p) in (op + dwp..op + W + dwp).enumerate() {
+                    for c0 in 0..C {
+                        eh[ix(m, n, p, c0, f)] =
+                            fast[wix(i as isize, j as isize, k as isize, c0, f)];
+                    }
+                }
+            }
+        }
+    }
 }
