@@ -32,7 +32,7 @@ nbdocs:
 
 c basename:
     mkdir -p target/c
-    gcc -fopenmp -lm -O3 -ffast-math "c/{{basename}}.c" -o "target/c/{{basename}}.out"
+    gcc -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -L/opt/homebrew/opt/libomp/lib -lomp -lm -O3 -ffast-math "c/{{basename}}.c" -o "target/c/{{basename}}.out"
     time "target/c/{{basename}}.out"
 
 rust basename:
