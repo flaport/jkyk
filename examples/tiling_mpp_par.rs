@@ -54,14 +54,53 @@ fn wix(m: isize, n: isize, p: isize, c: isize, f: isize) -> usize {
     ((((f * W + (m + W) % W) * W32 + (n + W32) % W32) * W32 + (p + W32) % W32) * C + c) as usize
 }
 
-fn main() -> Result<()> {
-    let sc = 0.99 / (3.0_f32).sqrt();
-    let eh = Arc::new(SyncUnsafeCell::new(vec![
-        0.0_f32;
-        (M * N * P * C * F) as usize
-    ]));
-    let st = ramped_sin(0.3, 5.0, 3.0, Q as usize);
+fn fill_fast(fast: &mut [f32], eh: &[f32], om: isize, on: isize, op: isize, mvm: isize) {
+    fast.fill(0.0);
+    let dwm = mvm * W2;
+    for f in 0..F {
+        for (i, m) in (om + dwm..om + W + dwm).enumerate() {
+            for (j, n) in (on - W2..on + W).enumerate() {
+                if n < 0 || n >= N {
+                    continue;
+                }
+                for (k, p) in (op - W2..op + W).enumerate() {
+                    if p < 0 || p >= P {
+                        continue;
+                    }
+                    for c0 in 0..C {
+                        fast[wix(i as isize, j as isize, k as isize, c0, f)] =
+                            eh[ix(m, n, p, c0, f)];
+                    }
+                }
+            }
+        }
+    }
+}
 
+fn extract_fast(eh: &mut [f32], fast: &[f32], om: isize, on: isize, op: isize, mvm: isize) {
+    let dwm = mvm * W2;
+    for f in 0..F {
+        for (i, m) in (om + dwm..om + W + dwm).enumerate() {
+            for (j, n) in (on - W2..on + W).enumerate() {
+                if n < 0 || n >= N {
+                    continue;
+                }
+                for (k, p) in (op - W2..op + W).enumerate() {
+                    if p < 0 || p >= P {
+                        continue;
+                    }
+                    for c0 in 0..C {
+                        eh[ix(m, n, p, c0, f)] =
+                            fast[wix(i as isize, j as isize, k as isize, c0, f)];
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn run(eh: Arc<SyncUnsafeCell<Vec<f32>>>, st: &[f32]) -> Arc<SyncUnsafeCell<Vec<f32>>> {
+    let sc = 0.99 / (3.0_f32).sqrt();
     let oms = M / W; // offset idxs in x/m direction
     let ons = N / W + 1; // offset idxs in y/n direction (one extra bc no periodic boundaries)
     let ops = P / W + 1; // offset idxs in z/p direction (one extra bc no periodic boundaries)
@@ -141,6 +180,18 @@ fn main() -> Result<()> {
         }
     }
 
+    eh
+}
+
+fn main() -> Result<()> {
+    let mut eh = Arc::new(SyncUnsafeCell::new(vec![
+        0.0_f32;
+        (M * N * P * C * F) as usize
+    ]));
+    let st = ramped_sin(0.3, 5.0, 3.0, Q as usize);
+
+    eh = run(eh, &st);
+
     // Write output to binary file
     let mut file = File::create("output.bin")?;
 
@@ -156,49 +207,4 @@ fn main() -> Result<()> {
     file.write_all(&byte_data)?;
 
     Ok(())
-}
-
-fn fill_fast(fast: &mut [f32], eh: &[f32], om: isize, on: isize, op: isize, mvm: isize) {
-    fast.fill(0.0);
-    let dwm = mvm * W2;
-    for f in 0..F {
-        for (i, m) in (om + dwm..om + W + dwm).enumerate() {
-            for (j, n) in (on - W2..on + W).enumerate() {
-                if n < 0 || n >= N {
-                    continue;
-                }
-                for (k, p) in (op - W2..op + W).enumerate() {
-                    if p < 0 || p >= P {
-                        continue;
-                    }
-                    for c0 in 0..C {
-                        fast[wix(i as isize, j as isize, k as isize, c0, f)] =
-                            eh[ix(m, n, p, c0, f)];
-                    }
-                }
-            }
-        }
-    }
-}
-
-fn extract_fast(eh: &mut [f32], fast: &[f32], om: isize, on: isize, op: isize, mvm: isize) {
-    let dwm = mvm * W2;
-    for f in 0..F {
-        for (i, m) in (om + dwm..om + W + dwm).enumerate() {
-            for (j, n) in (on - W2..on + W).enumerate() {
-                if n < 0 || n >= N {
-                    continue;
-                }
-                for (k, p) in (op - W2..op + W).enumerate() {
-                    if p < 0 || p >= P {
-                        continue;
-                    }
-                    for c0 in 0..C {
-                        eh[ix(m, n, p, c0, f)] =
-                            fast[wix(i as isize, j as isize, k as isize, c0, f)];
-                    }
-                }
-            }
-        }
-    }
 }

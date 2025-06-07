@@ -38,11 +38,57 @@ fn wix(m: isize, n: isize, p: isize, c: isize, f: isize) -> usize {
         as usize
 }
 
-fn main() -> Result<()> {
-    let sc = 0.99 / (3.0_f32).sqrt();
-    let mut eh = vec![0.0_f32; (M * N * P * C * F) as usize];
-    let st = ramped_sin(0.3, 5.0, 3.0, Q as usize);
+fn fill_fast(fast: &mut [f32], eh: &[f32], om: isize, on: isize, op: isize) {
+    fast.fill(0.0);
+    for f in 0..F {
+        for (i, m) in (om - W2..om + W).enumerate() {
+            if m < 0 || m >= M {
+                continue;
+            }
+            for (j, n) in (on - W2..on + W).enumerate() {
+                if n < 0 || n >= N {
+                    continue;
+                }
+                for (k, p) in (op - W2..op + W).enumerate() {
+                    if p < 0 || p >= P {
+                        continue;
+                    }
+                    for c0 in 0..C {
+                        fast[wix(i as isize, j as isize, k as isize, c0, f)] =
+                            eh[ix(m, n, p, c0, f)];
+                    }
+                }
+            }
+        }
+    }
+}
 
+fn extract_fast(eh: &mut [f32], fast: &[f32], om: isize, on: isize, op: isize) {
+    for f in 0..F {
+        for (i, m) in (om - W2..om + W).enumerate() {
+            if m < 0 || m >= M {
+                continue;
+            }
+            for (j, n) in (on - W2..on + W).enumerate() {
+                if n < 0 || n >= N {
+                    continue;
+                }
+                for (k, p) in (op - W2..op + W).enumerate() {
+                    if p < 0 || p >= P {
+                        continue;
+                    }
+                    for c0 in 0..C {
+                        eh[ix(m, n, p, c0, f)] =
+                            fast[wix(i as isize, j as isize, k as isize, c0, f)];
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn run(eh: &mut [f32], st: &[f32]) {
+    let sc = 0.99 / (3.0_f32).sqrt();
     let oms = M / W + 1; // offset idxs in x/m direction (one extra bc no periodic boundaries)
     let ons = N / W + 1; // offset idxs in y/n direction (one extra bc no periodic boundaries)
     let ops = P / W + 1; // offset idxs in z/p direction (one extra bc no periodic boundaries)
@@ -109,11 +155,18 @@ fn main() -> Result<()> {
                             }
                         }
                     }
-                    extract_fast(&mut eh, &fast, om, on, op);
+                    extract_fast(eh, &fast, om, on, op);
                 }
             }
         }
     }
+}
+
+fn main() -> Result<()> {
+    let mut eh = vec![0.0_f32; (M * N * P * C * F) as usize];
+    let st = ramped_sin(0.3, 5.0, 3.0, Q as usize);
+
+    run(&mut eh, &st);
 
     // Write output to binary file
     let mut file = File::create("output.bin")?;
@@ -127,53 +180,4 @@ fn main() -> Result<()> {
     file.write_all(&byte_data)?;
 
     Ok(())
-}
-
-fn fill_fast(fast: &mut [f32], eh: &[f32], om: isize, on: isize, op: isize) {
-    fast.fill(0.0);
-    for f in 0..F {
-        for (i, m) in (om - W2..om + W).enumerate() {
-            if m < 0 || m >= M {
-                continue;
-            }
-            for (j, n) in (on - W2..on + W).enumerate() {
-                if n < 0 || n >= N {
-                    continue;
-                }
-                for (k, p) in (op - W2..op + W).enumerate() {
-                    if p < 0 || p >= P {
-                        continue;
-                    }
-                    for c0 in 0..C {
-                        fast[wix(i as isize, j as isize, k as isize, c0, f)] =
-                            eh[ix(m, n, p, c0, f)];
-                    }
-                }
-            }
-        }
-    }
-}
-
-fn extract_fast(eh: &mut [f32], fast: &[f32], om: isize, on: isize, op: isize) {
-    for f in 0..F {
-        for (i, m) in (om - W2..om + W).enumerate() {
-            if m < 0 || m >= M {
-                continue;
-            }
-            for (j, n) in (on - W2..on + W).enumerate() {
-                if n < 0 || n >= N {
-                    continue;
-                }
-                for (k, p) in (op - W2..op + W).enumerate() {
-                    if p < 0 || p >= P {
-                        continue;
-                    }
-                    for c0 in 0..C {
-                        eh[ix(m, n, p, c0, f)] =
-                            fast[wix(i as isize, j as isize, k as isize, c0, f)];
-                    }
-                }
-            }
-        }
-    }
 }

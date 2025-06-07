@@ -34,15 +34,73 @@ static inline size_t wix(long m, long n, long p, long c, long f) {
     return (size_t)((((f * W32 + (m + W32) % W32) * W32 + (n + W32) % W32) * W32 + (p + W32) % W32) * C + c);
 }
 
-void fill_fast(float* fast, float* eh, long om, long on, long op);
-void extract_fast(float* eh, float* fast, long om, long on, long op);
+void fill_fast(float* fast, float* eh, long om, long on, long op) {
+    memset(fast, 0, (size_t)(3 * W / 2 * 3 * W / 2 * 3 * W / 2 * C * F) * sizeof(float));
+    for (long f = 0; f < F; f++) {
+        long i = 0;
+        for (long m = om - W2; m < om + W; m++) {
+            if (m < 0 || m >= M) {
+                i++;
+                continue;
+            }
+            long j = 0;
+            for (long n = on - W2; n < on + W; n++) {
+                if (n < 0 || n >= N) {
+                    j++;
+                    continue;
+                }
+                long k = 0;
+                for (long p = op - W2; p < op + W; p++) {
+                    if (p < 0 || p >= P) {
+                        k++;
+                        continue;
+                    }
+                    for (long c0 = 0; c0 < C; c0++) {
+                        fast[wix(i, j, k, c0, f)] = eh[ix(m, n, p, c0, f)];
+                    }
+                    k++;
+                }
+                j++;
+            }
+            i++;
+        }
+    }
+}
 
-int main() {
+void extract_fast(float* eh, float* fast, long om, long on, long op) {
+    for (long f = 0; f < F; f++) {
+        long i = 0;
+        for (long m = om - W2; m < om + W; m++) {
+            if (m < 0 || m >= M) {
+                i++;
+                continue;
+            }
+            long j = 0;
+            for (long n = on - W2; n < on + W; n++) {
+                if (n < 0 || n >= N) {
+                    j++;
+                    continue;
+                }
+                long k = 0;
+                for (long p = op - W2; p < op + W; p++) {
+                    if (p < 0 || p >= P) {
+                        k++;
+                        continue;
+                    }
+                    for (long c0 = 0; c0 < C; c0++) {
+                        eh[ix(m, n, p, c0, f)] = fast[wix(i, j, k, c0, f)];
+                    }
+                    k++;
+                }
+                j++;
+            }
+            i++;
+        }
+    }
+}
+
+void run(float* eh, float* st) {
     float sc = 0.99f / sqrtf(3.0f);
-    float* eh = calloc((size_t)(M * N * P * C * F), sizeof(float));
-    float* st = malloc((size_t)Q * sizeof(float));
-    ramped_sin(0.3f, 5.0f, 3.0f, (int)Q, st);
-
     long oms = M / W; // offset idxs in x/m direction
     long ons = N / W; // offset idxs in y/n direction
     long ops = P / W; // offset idxs in z/p direction
@@ -111,6 +169,14 @@ int main() {
             }
         }
     }
+}
+
+int main() {
+    float* eh = calloc((size_t)(M * N * P * C * F), sizeof(float));
+    float* st = calloc((size_t)Q , sizeof(float));
+    ramped_sin(0.3f, 5.0f, 3.0f, (int)Q, st);
+
+    run(eh, st);
 
     // Write output to binary file
     FILE* file = fopen("output.bin", "wb");
@@ -132,67 +198,3 @@ int main() {
     return 0;
 }
 
-void fill_fast(float* fast, float* eh, long om, long on, long op) {
-    memset(fast, 0, (size_t)(3 * W / 2 * 3 * W / 2 * 3 * W / 2 * C * F) * sizeof(float));
-    for (long f = 0; f < F; f++) {
-        long i = 0;
-        for (long m = om - W2; m < om + W; m++) {
-            if (m < 0 || m >= M) {
-                i++;
-                continue;
-            }
-            long j = 0;
-            for (long n = on - W2; n < on + W; n++) {
-                if (n < 0 || n >= N) {
-                    j++;
-                    continue;
-                }
-                long k = 0;
-                for (long p = op - W2; p < op + W; p++) {
-                    if (p < 0 || p >= P) {
-                        k++;
-                        continue;
-                    }
-                    for (long c0 = 0; c0 < C; c0++) {
-                        fast[wix(i, j, k, c0, f)] = eh[ix(m, n, p, c0, f)];
-                    }
-                    k++;
-                }
-                j++;
-            }
-            i++;
-        }
-    }
-}
-
-void extract_fast(float* eh, float* fast, long om, long on, long op) {
-    for (long f = 0; f < F; f++) {
-        long i = 0;
-        for (long m = om - W2; m < om + W; m++) {
-            if (m < 0 || m >= M) {
-                i++;
-                continue;
-            }
-            long j = 0;
-            for (long n = on - W2; n < on + W; n++) {
-                if (n < 0 || n >= N) {
-                    j++;
-                    continue;
-                }
-                long k = 0;
-                for (long p = op - W2; p < op + W; p++) {
-                    if (p < 0 || p >= P) {
-                        k++;
-                        continue;
-                    }
-                    for (long c0 = 0; c0 < C; c0++) {
-                        eh[ix(m, n, p, c0, f)] = fast[wix(i, j, k, c0, f)];
-                    }
-                    k++;
-                }
-                j++;
-            }
-            i++;
-        }
-    }
-}

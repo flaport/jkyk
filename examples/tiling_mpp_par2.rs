@@ -3,7 +3,6 @@ use rayon::prelude::*;
 use std::alloc::{alloc_zeroed, dealloc, Layout};
 use std::fs::File;
 use std::io::Write;
-use std::ptr;
 
 const M: isize = 160;
 const N: isize = 96;
@@ -59,20 +58,12 @@ impl RawArray {
 
     #[inline(always)]
     unsafe fn get(&self, index: usize) -> f32 {
-        debug_assert!(index < self.len);
         *self.ptr.add(index)
     }
 
     #[inline(always)]
     unsafe fn set(&self, index: usize, value: f32) {
-        debug_assert!(index < self.len);
         *self.ptr.add(index) = value;
-    }
-
-    #[inline(always)]
-    unsafe fn add(&self, index: usize, value: f32) {
-        debug_assert!(index < self.len);
-        *self.ptr.add(index) += value;
     }
 
     unsafe fn as_slice(&self) -> &[f32] {
@@ -90,11 +81,55 @@ impl Drop for RawArray {
 unsafe impl Send for RawArray {}
 unsafe impl Sync for RawArray {}
 
-fn main() -> Result<()> {
-    let sc = 0.99 / (3.0_f32).sqrt();
-    let eh = RawArray::new((M * N * P * C * F) as usize);
-    let st = ramped_sin(0.3, 5.0, 3.0, Q as usize);
+unsafe fn fill_fast(fast: &mut [f32], eh: &RawArray, om: isize, on: isize, op: isize, mvm: isize) {
+    fast.fill(0.0);
+    let dwm = mvm * W2;
+    for f in 0..F {
+        for (i, m) in (om + dwm..om + W + dwm).enumerate() {
+            for (j, n) in (on - W2..on + W).enumerate() {
+                if n < 0 || n >= N {
+                    continue;
+                }
+                for (k, p) in (op - W2..op + W).enumerate() {
+                    if p < 0 || p >= P {
+                        continue;
+                    }
+                    for c0 in 0..C {
+                        fast[wix(i as isize, j as isize, k as isize, c0, f)] =
+                            eh.get(ix(m, n, p, c0, f));
+                    }
+                }
+            }
+        }
+    }
+}
 
+unsafe fn extract_fast(eh: &RawArray, fast: &[f32], om: isize, on: isize, op: isize, mvm: isize) {
+    let dwm = mvm * W2;
+    for f in 0..F {
+        for (i, m) in (om + dwm..om + W + dwm).enumerate() {
+            for (j, n) in (on - W2..on + W).enumerate() {
+                if n < 0 || n >= N {
+                    continue;
+                }
+                for (k, p) in (op - W2..op + W).enumerate() {
+                    if p < 0 || p >= P {
+                        continue;
+                    }
+                    for c0 in 0..C {
+                        eh.set(
+                            ix(m, n, p, c0, f),
+                            fast[wix(i as isize, j as isize, k as isize, c0, f)],
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn run(eh: &mut RawArray, st: &[f32]) {
+    let sc = 0.99 / (3.0_f32).sqrt();
     let oms = M / W; // offset idxs in x/m direction
     let ons = N / W + 1; // offset idxs in y/n direction (one extra bc no periodic boundaries)
     let ops = P / W + 1; // offset idxs in z/p direction (one extra bc no periodic boundaries)
@@ -173,6 +208,13 @@ fn main() -> Result<()> {
             })
         }
     }
+}
+
+fn main() -> Result<()> {
+    let mut eh = RawArray::new((M * N * P * C * F) as usize);
+    let st = ramped_sin(0.3, 5.0, 3.0, Q as usize);
+
+    run(&mut eh, &st);
 
     // Write output to binary file
     let mut file = File::create("output.bin")?;
@@ -188,51 +230,4 @@ fn main() -> Result<()> {
     file.write_all(&byte_data)?;
 
     Ok(())
-}
-
-unsafe fn fill_fast(fast: &mut [f32], eh: &RawArray, om: isize, on: isize, op: isize, mvm: isize) {
-    fast.fill(0.0);
-    let dwm = mvm * W2;
-    for f in 0..F {
-        for (i, m) in (om + dwm..om + W + dwm).enumerate() {
-            for (j, n) in (on - W2..on + W).enumerate() {
-                if n < 0 || n >= N {
-                    continue;
-                }
-                for (k, p) in (op - W2..op + W).enumerate() {
-                    if p < 0 || p >= P {
-                        continue;
-                    }
-                    for c0 in 0..C {
-                        fast[wix(i as isize, j as isize, k as isize, c0, f)] =
-                            eh.get(ix(m, n, p, c0, f));
-                    }
-                }
-            }
-        }
-    }
-}
-
-unsafe fn extract_fast(eh: &RawArray, fast: &[f32], om: isize, on: isize, op: isize, mvm: isize) {
-    let dwm = mvm * W2;
-    for f in 0..F {
-        for (i, m) in (om + dwm..om + W + dwm).enumerate() {
-            for (j, n) in (on - W2..on + W).enumerate() {
-                if n < 0 || n >= N {
-                    continue;
-                }
-                for (k, p) in (op - W2..op + W).enumerate() {
-                    if p < 0 || p >= P {
-                        continue;
-                    }
-                    for c0 in 0..C {
-                        eh.set(
-                            ix(m, n, p, c0, f),
-                            fast[wix(i as isize, j as isize, k as isize, c0, f)],
-                        );
-                    }
-                }
-            }
-        }
-    }
 }

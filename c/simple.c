@@ -26,14 +26,8 @@ static inline size_t ix(int m, int n, int p, int c, int f) {
   return (((f * M + (m + M) % M) * N + (n + N) % N) * P + (p + P) % P) * C + c;
 }
 
-int main() {
+void run(float* eh, float* st) {
   const float Sc = 0.99 / sqrt(3.0);
-
-  float *EH = (float *)calloc(M * N * P * C * F, sizeof(float));
-
-  float St[Q];
-  ramped_sin(0.3, 5.0, 3.0, Q, St);
-
   size_t f, g;
   int s, m, n, p, c0, c1, c2, j0, j1, j2;
 
@@ -51,25 +45,33 @@ int main() {
             j0 = s * (c0 == 0);
             j1 = s * (c0 == 1);
             j2 = s * (c0 == 2);
-            EH[ix(m, n, p, c0, f)] +=
-                Sc * (EH[ix(m, n, p, c2, g)] -
-                      EH[ix(m - j2, n - j0, p - j1, c2, g)] -
-                      EH[ix(m, n, p, c1, g)] +
-                      EH[ix(m - j1, n - j2, p - j0, c1, g)]);
+            eh[ix(m, n, p, c0, f)] +=
+                Sc * (eh[ix(m, n, p, c2, g)] -
+                      eh[ix(m - j2, n - j0, p - j1, c2, g)] -
+                      eh[ix(m, n, p, c1, g)] +
+                      eh[ix(m - j1, n - j2, p - j0, c1, g)]);
           }
         }
       }
     }
     if (f == 0) {
-      EH[ix(Sx, Sy, Sz, 2, 0)] += St[i / 2];
+      eh[ix(Sx, Sy, Sz, 2, 0)] +=  st[i / 2];
     }
   }
+}
+
+int main() {
+  float *eh = (float *)calloc(M * N * P * C * F, sizeof(float));
+  float  st[Q];
+  ramped_sin(0.3, 5.0, 3.0, Q,  st);
+
+  run(eh, st);
 
   FILE *file = fopen("output.bin", "wb");
-  fwrite(EH, sizeof(float), 2 * M * N * P * 3, file);
+  fwrite(eh, sizeof(float), 2 * M * N * P * 3, file);
   fclose(file);
 
-  free(EH);
+  free(eh);
 
   return 0;
 }

@@ -31,11 +31,8 @@ fn ix(m: isize, n: isize, p: isize, c: isize, f: isize) -> usize {
     ((((f * M + (m + M) % M) * N + (n + N) % N) * P + (p + P) % P) * C + c) as usize
 }
 
-fn main() -> Result<()> {
+fn run(eh: &mut [f32], st: &[f32]) {
     let sc = 0.99 / (3.0_f32).sqrt();
-    let mut eh = vec![0.0_f32; (M * N * P * C * F) as usize];
-    let st = ramped_sin(0.3, 5.0, 3.0, Q as usize);
-
     let oms = M / W; // offset idxs in x/m direction
     let ons = N / W; // offset idxs in y/n direction
     let ops = P / W; // offset idxs in z/p direction
@@ -116,6 +113,13 @@ fn main() -> Result<()> {
             }
         }
     }
+}
+
+fn main() -> Result<()> {
+    let mut eh = vec![0.0_f32; (M * N * P * C * F) as usize];
+    let st = ramped_sin(0.3, 5.0, 3.0, Q as usize);
+
+    run(&mut eh, &st);
 
     // Write output to binary file
     let mut file = File::create("output.bin")?;

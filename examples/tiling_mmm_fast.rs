@@ -37,11 +37,62 @@ fn wix(m: isize, n: isize, p: isize, c: isize, f: isize) -> usize {
     ((((f * W + m) * W + n) * W + p) * C + c) as usize // no bounds wrapping needed
 }
 
-fn main() -> Result<()> {
-    let sc = 0.99 / (3.0_f32).sqrt();
-    let mut eh = vec![0.0_f32; (M * N * P * C * F) as usize];
-    let st = ramped_sin(0.3, 5.0, 3.0, Q as usize);
+fn fill_fast(
+    fast: &mut [f32],
+    eh: &[f32],
+    om: isize,
+    mvm: isize,
+    on: isize,
+    mvn: isize,
+    op: isize,
+    mvp: isize,
+) {
+    let dwm = mvm * W2;
+    let dwn = mvn * W2;
+    let dwp = mvp * W2;
+    for f in 0..F {
+        for (i, m) in (om + dwm..om + W + dwm).enumerate() {
+            for (j, n) in (on + dwn..on + W + dwn).enumerate() {
+                for (k, p) in (op + dwp..op + W + dwp).enumerate() {
+                    for c0 in 0..C {
+                        fast[wix(i as isize, j as isize, k as isize, c0, f)] =
+                            eh[ix(m, n, p, c0, f)];
+                    }
+                }
+            }
+        }
+    }
+}
 
+fn extract_fast(
+    eh: &mut [f32],
+    fast: &[f32],
+    om: isize,
+    mvm: isize,
+    on: isize,
+    mvn: isize,
+    op: isize,
+    mvp: isize,
+) {
+    let dwm = mvm * W2;
+    let dwn = mvn * W2;
+    let dwp = mvp * W2;
+    for f in 0..F {
+        for (i, m) in (om + dwm..om + W + dwm).enumerate() {
+            for (j, n) in (on + dwn..on + W + dwn).enumerate() {
+                for (k, p) in (op + dwp..op + W + dwp).enumerate() {
+                    for c0 in 0..C {
+                        eh[ix(m, n, p, c0, f)] =
+                            fast[wix(i as isize, j as isize, k as isize, c0, f)];
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn run(eh: &mut [f32], st: &[f32]) {
+    let sc = 0.99 / (3.0_f32).sqrt();
     let oms = M / W; // offset idxs in x/m direction
     let ons = N / W; // offset idxs in y/n direction
     let ops = P / W; // offset idxs in z/p direction
@@ -134,7 +185,7 @@ fn main() -> Result<()> {
                                         }
                                     }
                                 }
-                                extract_fast(&mut eh, &fast, om, mvm, on, mvn, op, mvp);
+                                extract_fast(eh, &fast, om, mvm, on, mvn, op, mvp);
                             }
                         }
                     }
@@ -142,6 +193,13 @@ fn main() -> Result<()> {
             }
         }
     }
+}
+
+fn main() -> Result<()> {
+    let mut eh = vec![0.0_f32; (M * N * P * C * F) as usize];
+    let st = ramped_sin(0.3, 5.0, 3.0, Q as usize);
+
+    run(&mut eh, &st);
 
     // Write output to binary file
     let mut file = File::create("output.bin")?;
@@ -155,58 +213,4 @@ fn main() -> Result<()> {
     file.write_all(&byte_data)?;
 
     Ok(())
-}
-
-fn fill_fast(
-    fast: &mut [f32],
-    eh: &[f32],
-    om: isize,
-    mvm: isize,
-    on: isize,
-    mvn: isize,
-    op: isize,
-    mvp: isize,
-) {
-    let dwm = mvm * W2;
-    let dwn = mvn * W2;
-    let dwp = mvp * W2;
-    for f in 0..F {
-        for (i, m) in (om + dwm..om + W + dwm).enumerate() {
-            for (j, n) in (on + dwn..on + W + dwn).enumerate() {
-                for (k, p) in (op + dwp..op + W + dwp).enumerate() {
-                    for c0 in 0..C {
-                        fast[wix(i as isize, j as isize, k as isize, c0, f)] =
-                            eh[ix(m, n, p, c0, f)];
-                    }
-                }
-            }
-        }
-    }
-}
-
-fn extract_fast(
-    eh: &mut [f32],
-    fast: &[f32],
-    om: isize,
-    mvm: isize,
-    on: isize,
-    mvn: isize,
-    op: isize,
-    mvp: isize,
-) {
-    let dwm = mvm * W2;
-    let dwn = mvn * W2;
-    let dwp = mvp * W2;
-    for f in 0..F {
-        for (i, m) in (om + dwm..om + W + dwm).enumerate() {
-            for (j, n) in (on + dwn..on + W + dwn).enumerate() {
-                for (k, p) in (op + dwp..op + W + dwp).enumerate() {
-                    for c0 in 0..C {
-                        eh[ix(m, n, p, c0, f)] =
-                            fast[wix(i as isize, j as isize, k as isize, c0, f)];
-                    }
-                }
-            }
-        }
-    }
 }
